@@ -17,6 +17,7 @@ const (
 type Category string
 
 const (
+	CategoryNone                           Category = ""
 	CategoryAllCategories                  Category = "0_0"
 	CategoryAnime                          Category = "1_0"
 	CategoryAnimeMusicVideo                Category = "1_1"
@@ -43,17 +44,32 @@ const (
 	CategorySoftwareGames                  Category = "6_2"
 )
 
-type SearchParameters struct {
-	Filter   Filter
-	Category Category
-	User     string
-}
+type SortBy string
 
-func (p *SearchParameters) GetCategory() Category {
-	if p.Category == "" {
-		return CategoryAllCategories
-	}
-	return p.Category
+const (
+	SortByNone      SortBy = ""
+	SortByComments  SortBy = "comments"
+	SortBySize      SortBy = "size"
+	SortByDate      SortBy = "id"
+	SortBySeeders   SortBy = "seeders"
+	SortByLeechers  SortBy = "leechers"
+	SortByDownloads SortBy = "downloads"
+)
+
+type SortOrder string
+
+const (
+	SortOrderNone       = ""
+	SortOrderDescending = "desc"
+	SortOrderAscending  = "asc"
+)
+
+type SearchParameters struct {
+	Filter    Filter
+	Category  Category
+	User      string
+	SortBy    SortBy
+	SortOrder SortOrder
 }
 
 type Media struct {

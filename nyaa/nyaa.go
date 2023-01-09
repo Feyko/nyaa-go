@@ -81,9 +81,13 @@ func urlForParams(search string, parameters SearchParameters) (string, error) {
 		return "", errors.Wrap(err, "error parsing nyaa url")
 	}
 
-	URL.Query().Set("f", string(parameters.Filter))
-	URL.Query().Set("c", string(parameters.GetCategory()))
-	URL.Query().Set("q", search)
+	query := URL.Query()
+	query.Set("f", strconv.FormatInt(int64(parameters.Filter), 10))
+	query.Set("c", string(parameters.Category))
+	query.Set("q", search)
+	query.Set("s", string(parameters.SortBy))
+	query.Set("o", string(parameters.SortOrder))
+	URL.RawQuery = query.Encode()
 
 	return URL.String(), nil
 }
