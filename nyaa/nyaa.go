@@ -158,15 +158,15 @@ func parseMediaElementLinks(links []*html.Node, media *Media) error {
 		return errors.Errorf("unexpected layout: expected 4 links, got %d", len(links))
 	}
 
-	href, ok := getAttributeValueByKey(links[0], "href")
-	if !ok {
-		return errors.New("unexpected layout: first link does not have an href")
+	href, err := getLinkHref(links, 0)
+	if err != nil {
+		return err
 	}
 	media.Category = hrefToCategory(href)
 
-	href, ok = getAttributeValueByKey(links[1], "href")
-	if !ok {
-		return errors.New("unexpected layout: second link does not have an href")
+	href, err = getLinkHref(links, 1)
+	if err != nil {
+		return err
 	}
 	id, err := hrefToID(href)
 	if err != nil {
@@ -175,23 +175,31 @@ func parseMediaElementLinks(links []*html.Node, media *Media) error {
 	media.ID = id
 	title, ok := getAttributeValueByKey(links[1], "title")
 	if !ok {
-		return errors.New("unexpected layout: second link does not have a title")
+		return errors.New("unexpected layout: link 1 does not have a title")
 	}
 	media.Name = title
 
-	href, ok = getAttributeValueByKey(links[2], "href")
-	if !ok {
-		return errors.New("unexpected layout: third link does not have an href")
+	href, err = getLinkHref(links, 2)
+	if err != nil {
+		return err
 	}
 	media.Torrent = href
 
-	href, ok = getAttributeValueByKey(links[3], "href")
-	if !ok {
-		return errors.New("unexpected layout: fourth link does not have an href")
+	href, err = getLinkHref(links, 3)
+	if err != nil {
+		return err
 	}
 	media.Magnet = href
 
 	return nil
+}
+
+func getLinkHref(links []*html.Node, index int) (string, error) {
+	href, ok := getAttributeValueByKey(links[index], "href")
+	if !ok {
+		return "", errors.Errorf("unexpected layout: link %d does not have an href", index)
+	}
+	return href, nil
 }
 
 func parseMediaElementTexts(nodes []*html.Node, media *Media) error {
@@ -199,43 +207,55 @@ func parseMediaElementTexts(nodes []*html.Node, media *Media) error {
 		return errors.Errorf("unexpected layout: expected 8 nodes, got %d", len(nodes))
 	}
 
-	if nodes[3].FirstChild == nil || nodes[3].FirstChild.Type != html.TextNode {
-		return errors.New("unexpected layout: expected node 4 to have a text first child")
+	data, err := getFirstChildText(nodes, 3)
+	if err != nil {
+		return err
 	}
-	size, err := units.FromHumanSize(nodes[3].FirstChild.Data)
+	size, err := units.FromHumanSize(data)
 	if err != nil {
 		return errors.Wrap(err, "error parsing size")
 	}
 	media.Size = uint64(size)
 
-	if nodes[5].FirstChild == nil || nodes[5].FirstChild.Type != html.TextNode {
-		return errors.New("unexpected layout: expected node 6 to have a text first child")
+	data, err = getFirstChildText(nodes, 5)
+	if err != nil {
+		return err
 	}
-	seeders, err := strconv.Atoi(nodes[5].FirstChild.Data)
+	seeders, err := strconv.Atoi(data)
 	if err != nil {
 		return errors.Wrap(err, "error parsing se")
 	}
 	media.Seeders = uint(seeders)
 
-	if nodes[6].FirstChild == nil || nodes[6].FirstChild.Type != html.TextNode {
-		return errors.New("unexpected layout: expected node 7 to have a text first child")
+	data, err = getFirstChildText(nodes, 6)
+	if err != nil {
+		return err
 	}
-	leechers, err := strconv.Atoi(nodes[6].FirstChild.Data)
+	leechers, err := strconv.Atoi(data)
 	if err != nil {
 		return errors.Wrap(err, "error parsing leechers")
 	}
 	media.Leechers = uint(leechers)
 
-	if nodes[7].FirstChild == nil || nodes[7].FirstChild.Type != html.TextNode {
-		return errors.New("unexpected layout: expected node 8 to have a text first child")
+	data, err = getFirstChildText(nodes, 7)
+	if err != nil {
+		return err
 	}
-	downloads, err := strconv.Atoi(nodes[7].FirstChild.Data)
+	downloads, err := strconv.Atoi(data)
 	if err != nil {
 		return errors.Wrap(err, "error parsing downloads")
 	}
 	media.Downloads = uint(downloads)
 
 	return nil
+}
+
+func getFirstChildText(nodes []*html.Node, index int) (string, error) {
+	child := nodes[index].FirstChild
+	if child == nil || child.Type != html.TextNode {
+		return "", errors.Errorf("unexpected layout: expected node %d to have a text first child", index)
+	}
+	return child.Data, nil
 }
 
 func parseMediaElementTimestamp(nodes []*html.Node, media *Media) error {
