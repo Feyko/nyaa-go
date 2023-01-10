@@ -1,4 +1,4 @@
-module nyaa-go
+module github.com/feyko/nyaa-go
 
 go 1.19
 
