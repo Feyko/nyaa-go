@@ -15,6 +15,8 @@ import (
 
 var NyaaURL = "https://nyaa.si"
 
+var PageLimit uint = 100
+
 func Search(search string, parameters ...SearchParameters) ([]Media, error) {
 	params, err := getOneParameterSet(parameters)
 	if err != nil {
@@ -41,6 +43,10 @@ func getOneParameterSet(parameters []SearchParameters) (SearchParameters, error)
 	}
 	if len(parameters) > 1 {
 		return SearchParameters{}, errors.New("only one parameter set accepted")
+	}
+
+	if params.Page > PageLimit {
+		return params, errors.New("exceeded page limit")
 	}
 
 	return params, nil
@@ -76,7 +82,7 @@ func urlForParams(search string, parameters SearchParameters) (string, error) {
 		baseURL += "/user/" + url.PathEscape(parameters.User)
 	}
 
-	URL, err := url.Parse(NyaaURL)
+	URL, err := url.Parse(baseURL)
 	if err != nil {
 		return "", errors.Wrap(err, "error parsing nyaa url")
 	}
@@ -87,6 +93,7 @@ func urlForParams(search string, parameters SearchParameters) (string, error) {
 	query.Set("q", search)
 	query.Set("s", string(parameters.SortBy))
 	query.Set("o", string(parameters.SortOrder))
+	query.Set("p", strconv.FormatInt(int64(parameters.Page), 10))
 	URL.RawQuery = query.Encode()
 
 	return URL.String(), nil

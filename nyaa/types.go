@@ -70,6 +70,7 @@ type SearchParameters struct {
 	User      string
 	SortBy    SortBy
 	SortOrder SortOrder
+	Page      uint
 }
 
 type Media struct {
